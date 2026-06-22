@@ -594,6 +594,7 @@
   // Delete Entry
   // ============================================================
   async function deleteEntry(id) {
+    if (!confirm('Delete this entry?')) return;
     state.entries = state.entries.filter(e => e.id !== id);
     await saveState();
     render();
