@@ -613,7 +613,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-  import { getAuth, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, GoogleAuthProvider, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   // Firebase config
@@ -694,16 +694,31 @@
   // ============================================================
   // Auth
   // ============================================================
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // Set persistence to local so auth survives redirects
+  await setPersistence(auth, browserLocalPersistence);
+
+  // Handle redirect result (for mobile sign-in)
+  try {
+    await getRedirectResult(auth);
+  } catch (err) {
+    console.error('Redirect result error:', err);
+  }
+
   document.getElementById('googleSignInBtn').addEventListener('click', async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      // If popup fails (blocked, session storage issue), fall back to redirect
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/internal-error' || err.code === 'auth/missing-initial-state') {
-        signInWithRedirect(auth, provider);
-      } else {
-        console.error('Sign-in error:', err);
-        showToast('Sign-in failed. Please try again.', 'error');
+    if (isMobile) {
+      signInWithRedirect(auth, provider);
+    } else {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        if (err.code === 'auth/popup-blocked') {
+          signInWithRedirect(auth, provider);
+        } else {
+          console.error('Sign-in error:', err);
+          showToast('Sign-in failed. Please try again.', 'error');
+        }
       }
     }
   });
