@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Calculator</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --green: #4ade80;
+      --green-hover: #86efac;
+      --red: #f87171;
+      --red-hover: #fca5a5;
+      --orange: #fb923c;
+      --orange-hover: #fdba74;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* --- Login Screen --- */
+    .login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 2rem;
+    }
+
+    .login-screen h1 {
+      font-size: 2.5rem;
+      color: var(--accent);
+    }
+
+    .login-screen p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    #g_id_signin {
+      margin-top: 1rem;
+    }
+
+    /* --- Top Bar --- */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar .brand {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-info img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+    }
+
+    .user-info .user-name {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .btn-signout {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-signout:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    /* --- Main Content --- */
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      color: var(--accent);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    .hidden { display: none !important; }
+
+    /* --- Cards & Forms --- */
+    .form-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .form-card h2 {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group input {
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { background: var(--accent); color: var(--bg); }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-green { background: var(--green); color: var(--bg); }
+    .btn-green:hover { background: var(--green-hover); }
+
+    .btn-red { background: var(--red); color: var(--bg); }
+    .btn-red:hover { background: var(--red-hover); }
+
+    .btn-orange { background: var(--orange); color: var(--bg); }
+    .btn-orange:hover { background: var(--orange-hover); }
+
+    .btn-small { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+    /* --- Tables --- */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.5rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 0.6rem 0.5rem;
+      border-bottom: 1px solid var(--surface2);
+      font-size: 0.95rem;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .totals-row td {
+      font-weight: 700;
+      border-top: 2px solid var(--accent);
+      border-bottom: none;
+      color: var(--accent);
+      padding-top: 0.8rem;
+    }
+
+    .actions-cell { display: flex; gap: 0.4rem; }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .stash-detail {
+      margin-top: 0.75rem;
+      padding: 1rem;
+      background: var(--surface2);
+      border-radius: 8px;
+    }
+
+    /* --- Edit modal --- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal h3 { margin-bottom: 1rem; color: var(--accent); }
+    .modal .form-group { margin-bottom: 0.75rem; }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface2); }
+
+    /* --- Responsive --- */
+    @media (max-width: 600px) {
+      .form-row { flex-direction: column; }
+      .form-group { min-width: 100%; }
+      table { font-size: 0.85rem; }
+      th, td { padding: 0.4rem 0.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="loginScreen" class="login-screen">
+  <h1>💰 Pay Calculator</h1>
+  <p>Sign in to track your pay</p>
+  <div id="g_id_signin"></div>
+</div>
+
+<!-- ==================== APP (hidden until signed in) ==================== -->
+<div id="appScreen" class="hidden">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="brand">💰 Pay Calculator</span>
+    <div class="user-info">
+      <img id="userAvatar" src="" alt="avatar">
+      <span id="userName" class="user-name"></span>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Entry Form -->
+    <div class="form-card">
+      <h2>New Entry</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="entryDate">
+        </div>
+        <div class="form-group">
+          <label>Service Cost ($)</label>
+          <input type="number" id="serviceCost" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter') addEntry()">
+        </div>
+        <div class="form-group">
+          <label>Tip ($)</label>
+          <input type="number" id="tip" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter') addEntry()">
+        </div>
+        <button class="btn btn-primary" onclick="addEntry()">Submit</button>
+      </div>
+    </div>
+
+    <!-- Current Entries -->
+    <div class="form-card">
+      <div class="section-header">
+        <h2>Current Entries</h2>
+        <button class="btn btn-green btn-small" onclick="stashEntries()">📦 Stash</button>
+      </div>
+      <div id="currentEntries"></div>
+    </div>
+
+    <!-- Stashed History -->
+    <div class="form-card">
+      <h2>Stashed History</h2>
+      <div id="stashedHistory"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>Edit Entry</h3>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="editDate">
+    </div>
+    <div class="form-group">
+      <label>Service Cost ($)</label>
+      <input type="number" id="editServiceCost" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>Tip ($)</label>
+      <input type="number" id="editTip" min="0" step="0.01">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG — Replace with your Google OAuth Client ID
+  // ============================================================
+  const GOOGLE_CLIENT_ID = '895287788816-3t5tmovrhbvr7g4cb3nej9kfajhcq8u4.apps.googleusercontent.com';
+
+  // ============================================================
+  // Auth State
+  // ============================================================
+  let currentUser = null; // { id, name, email, picture }
+
+  function getStorageKey() {
+    return `payCalc_${currentUser.id}`;
+  }
+
+  // Decode JWT payload (Google ID token is a JWT)
+  function decodeJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join('')
+    );
+    return JSON.parse(json);
+  }
+
+  // Called by Google when sign-in succeeds
+  function handleCredentialResponse(response) {
+    const payload = decodeJwt(response.credential);
+    currentUser = {
+      id: payload.sub,
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture
+    };
+
+    // Persist session so page refresh stays logged in
+    localStorage.setItem('payCalc_session', JSON.stringify(currentUser));
+
+    showApp();
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+
+    document.getElementById('userAvatar').src = currentUser.picture;
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('entryDate').value = todayStr();
+
+    render();
+  }
+
+  function signOut() {
+    currentUser = null;
+    localStorage.removeItem('payCalc_session');
+
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+
+    // Re-render the Google button so they can sign in again
+    google.accounts.id.disableAutoSelect();
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
+    );
+  }
+
+  // ============================================================
+  // Initialize Google Sign-In
+  // ============================================================
+  window.addEventListener('load', () => {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+      auto_select: true  // auto-sign-in if only one Google account
+    });
+
+    // Check for existing session
+    const saved = localStorage.getItem('payCalc_session');
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      showApp();
+      return;
+    }
+
+    // Render the sign-in button
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
+    );
+
+    // Also try One Tap prompt
+    google.accounts.id.prompt();
+  });
+
+  // ============================================================
+  // Data — same logic, but keyed per user
+  // ============================================================
+  function loadState() {
+    const raw = localStorage.getItem(getStorageKey());
+    if (raw) return JSON.parse(raw);
+    return { entries: [], stashes: [] };
+  }
+
+  function saveState(state) {
+    localStorage.setItem(getStorageKey(), JSON.stringify(state));
+  }
+
+  // ---- Helpers ----
+  function fmt(n) { return n.toFixed(2); }
+
+  function todayStr() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  function formatDate(iso) {
+    const [y, m, d] = iso.split('-');
+    return `${m}/${d}/${y}`;
+  }
+
+  // ---- Add Entry ----
+  function addEntry() {
+    const date = document.getElementById('entryDate').value;
+    const serviceCost = parseFloat(document.getElementById('serviceCost').value) || 0;
+    const tip = parseFloat(document.getElementById('tip').value) || 0;
+
+    if (serviceCost <= 0) {
+      alert('Please enter a service cost.');
+      return;
+    }
+
+    const myPay = serviceCost * 0.6;
+    const total = myPay + tip;
+
+    const state = loadState();
+    state.entries.push({ id: Date.now(), date, serviceCost, tip, myPay, total });
+    saveState(state);
+
+    document.getElementById('serviceCost').value = '';
+    document.getElementById('tip').value = '';
+    document.getElementById('entryDate').value = todayStr();
+    render();
+  }
+
+  // ---- Delete Entry ----
+  function deleteEntry(id) {
+    const state = loadState();
+    state.entries = state.entries.filter(e => e.id !== id);
+    saveState(state);
+    render();
+  }
+
+  // ---- Edit Entry ----
+  let editingId = null;
+  let editingSource = null;
+
+  function openEditModal(id, source) {
+    editingId = id;
+    editingSource = source;
+
+    const state = loadState();
+    const entry = source === 'current'
+      ? state.entries.find(e => e.id === id)
+      : state.stashes[source].entries.find(e => e.id === id);
+
+    document.getElementById('editDate').value = entry.date;
+    document.getElementById('editServiceCost').value = entry.serviceCost;
+    document.getElementById('editTip').value = entry.tip;
+    document.getElementById('editModal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    editingId = null;
+    editingSource = null;
+  }
+
+  function saveEdit() {
+    const date = document.getElementById('editDate').value;
+    const serviceCost = parseFloat(document.getElementById('editServiceCost').value) || 0;
+    const tip = parseFloat(document.getElementById('editTip').value) || 0;
+    const myPay = serviceCost * 0.6;
+    const total = myPay + tip;
+
+    const state = loadState();
+    const entries = editingSource === 'current'
+      ? state.entries
+      : state.stashes[editingSource].entries;
+
+    const idx = entries.findIndex(e => e.id === editingId);
+    if (idx !== -1) {
+      entries[idx] = { ...entries[idx], date, serviceCost, tip, myPay, total };
+    }
+
+    saveState(state);
+    closeEditModal();
+    render();
+  }
+
+  // ---- Stash ----
+  function dateRangeLabel(entries) {
+    const dates = entries.map(e => e.date).sort();
+    const earliest = dates[0];
+    const latest = dates[dates.length - 1];
+    if (earliest === latest) {
+      return formatDate(earliest);
+    }
+    return `${formatDate(earliest)} – ${formatDate(latest)}`;
+  }
+
+  function stashEntries() {
+    const state = loadState();
+    if (state.entries.length === 0) {
+      alert('No entries to stash.');
+      return;
+    }
+
+    const label = dateRangeLabel(state.entries);
+
+    state.stashes.unshift({
+      id: Date.now(),
+      label,
+      stashedAt: new Date().toISOString(),
+      entries: [...state.entries]
+    });
+    state.entries = [];
+    saveState(state);
+    render();
+  }
+
+  function unstash(stashId) {
+    const state = loadState();
+    const idx = state.stashes.findIndex(s => s.id === stashId);
+    if (idx === -1) return;
+
+    state.entries = [...state.entries, ...state.stashes[idx].entries];
+    state.stashes.splice(idx, 1);
+    saveState(state);
+    render();
+  }
+
+  function deleteStash(stashId) {
+    if (!confirm('Permanently delete this stash?')) return;
+    const state = loadState();
+    state.stashes = state.stashes.filter(s => s.id !== stashId);
+    saveState(state);
+    render();
+  }
+
+  // ---- Render ----
+  function renderTable(entries, source) {
+    if (entries.length === 0) {
+      return '<div class="empty-state">No entries yet</div>';
+    }
+
+    const sumService = entries.reduce((s, e) => s + e.serviceCost, 0);
+    const sumTip = entries.reduce((s, e) => s + e.tip, 0);
+    const sumMyPay = entries.reduce((s, e) => s + e.myPay, 0);
+    const sumTotal = entries.reduce((s, e) => s + e.total, 0);
+
+    let html = `<table>
+      <thead><tr>
+        <th>Date</th><th>Service</th><th>Tip</th><th>My Pay</th><th>Total</th><th></th>
+      </tr></thead><tbody>`;
+
+    for (const e of entries) {
+      html += `<tr>
+        <td>${formatDate(e.date)}</td>
+        <td>$${fmt(e.serviceCost)}</td>
+        <td>$${fmt(e.tip)}</td>
+        <td>$${fmt(e.myPay)}</td>
+        <td>$${fmt(e.total)}</td>
+        <td><div class="actions-cell">
+          <button class="btn btn-primary btn-small" onclick="openEditModal(${e.id}, ${typeof source === 'number' ? source : `'${source}'`})">✏️</button>
+          ${source === 'current' ? `<button class="btn btn-red btn-small" onclick="deleteEntry(${e.id})">🗑</button>` : ''}
+        </div></td>
+      </tr>`;
+    }
+
+    html += `<tr class="totals-row">
+      <td>Totals</td>
+      <td>$${fmt(sumService)}</td>
+      <td>$${fmt(sumTip)}</td>
+      <td>$${fmt(sumMyPay)}</td>
+      <td>$${fmt(sumTotal)}</td>
+      <td></td>
+    </tr></tbody></table>`;
+    return html;
+  }
+
+  function render() {
+    const state = loadState();
+
+    document.getElementById('currentEntries').innerHTML = renderTable(state.entries, 'current');
+
+    const stashContainer = document.getElementById('stashedHistory');
+    if (state.stashes.length === 0) {
+      stashContainer.innerHTML = '<div class="empty-state">No stashed history</div>';
+      return;
+    }
+
+    let html = '';
+    for (let i = 0; i < state.stashes.length; i++) {
+      const stash = state.stashes[i];
+      const sumTotal = stash.entries.reduce((s, e) => s + e.total, 0);
+
+      html += `<details class="stash-detail" ${i === 0 ? 'open' : ''}>
+        <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <span><strong>${stash.label}</strong> — $${fmt(sumTotal)} total</span>
+          <span>
+            <button class="btn btn-orange btn-small" onclick="event.stopPropagation(); unstash(${stash.id})">↩️ Unstash</button>
+            <button class="btn btn-red btn-small" onclick="event.stopPropagation(); deleteStash(${stash.id})">🗑</button>
+          </span>
+        </summary>
+        ${renderTable(stash.entries, i)}
+      </details>`;
+    }
+    stashContainer.innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
