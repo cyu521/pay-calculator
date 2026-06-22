@@ -244,7 +244,37 @@
       padding: 1rem;
       background: var(--surface2);
       border-radius: 8px;
+      transition: transform 0.15s, opacity 0.15s;
     }
+
+    .stash-detail.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+
+    .stash-detail.drag-over {
+      border: 2px dashed var(--accent);
+    }
+
+    .stash-reorder {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .btn-reorder {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+
+    .btn-reorder:hover { background: var(--surface); color: var(--text); }
+    .btn-reorder:disabled { opacity: 0.25; cursor: not-allowed; }
 
     /* --- Edit modal --- */
     .modal-overlay {
@@ -851,6 +881,16 @@
 
   document.getElementById('stashBtn').addEventListener('click', stashEntries);
 
+  async function moveStash(idx, direction) {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= state.stashes.length) return;
+    const [moved] = state.stashes.splice(idx, 1);
+    state.stashes.splice(newIdx, 0, moved);
+    await saveState();
+    showToast('Stash order updated');
+    render();
+  }
+
   // ============================================================
   // Render
   // ============================================================
@@ -1010,10 +1050,18 @@
       for (let i = 0; i < state.stashes.length; i++) {
         const stash = state.stashes[i];
         const sumTotal = stash.entries.reduce((s, e) => s + e.total, 0);
+        const isFirst = i === 0;
+        const isLast = i === state.stashes.length - 1;
 
-        html += `<details class="stash-detail" ${i === 0 ? 'open' : ''}>
+        html += `<details class="stash-detail" ${isFirst ? 'open' : ''} draggable="true" data-stash-idx="${i}">
           <summary class="stash-summary" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-            <span><strong>${stash.label}</strong> — $${fmt(sumTotal)} total</span>
+            <span>
+              <span class="stash-reorder">
+                <button class="btn-reorder" data-move-up="${i}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
+                <button class="btn-reorder" data-move-down="${i}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
+              </span>
+              <strong>${stash.label}</strong> — $${fmt(sumTotal)} total
+            </span>
             <span>
               <button class="btn btn-orange btn-small" data-unstash="${stash.id}">↩️ Unstash</button>
               <button class="btn btn-red btn-small" data-delstash="${stash.id}">🗑</button>
@@ -1053,6 +1101,66 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteStash(Number(btn.dataset.delstash));
+      });
+    });
+
+    // Reorder buttons
+    document.querySelectorAll('[data-move-up]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        moveStash(Number(btn.dataset.moveUp), -1);
+      });
+    });
+
+    document.querySelectorAll('[data-move-down]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        moveStash(Number(btn.dataset.moveDown), 1);
+      });
+    });
+
+    // Drag and drop for stashes
+    let dragIdx = null;
+
+    document.querySelectorAll('[data-stash-idx]').forEach(el => {
+      el.addEventListener('dragstart', (e) => {
+        dragIdx = Number(el.dataset.stashIdx);
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        document.querySelectorAll('.drag-over').forEach(d => d.classList.remove('drag-over'));
+        dragIdx = null;
+      });
+
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const targetIdx = Number(el.dataset.stashIdx);
+        if (targetIdx !== dragIdx) {
+          el.classList.add('drag-over');
+        }
+      });
+
+      el.addEventListener('dragleave', () => {
+        el.classList.remove('drag-over');
+      });
+
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        const targetIdx = Number(el.dataset.stashIdx);
+        if (dragIdx !== null && dragIdx !== targetIdx) {
+          const moved = state.stashes.splice(dragIdx, 1)[0];
+          state.stashes.splice(targetIdx, 0, moved);
+          saveState();
+          render();
+          showToast('Stash order updated');
+        }
       });
     });
   }
