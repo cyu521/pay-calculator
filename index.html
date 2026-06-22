@@ -280,8 +280,89 @@
     @media (max-width: 600px) {
       .form-row { flex-direction: column; }
       .form-group { min-width: 100%; }
-      table { font-size: 0.85rem; }
-      th, td { padding: 0.4rem 0.3rem; }
+      .form-group input { font-size: 16px; } /* prevents iOS zoom on focus */
+
+      .top-bar { flex-direction: column; gap: 0.5rem; padding: 0.5rem 1rem; }
+      .top-bar .brand { font-size: 1rem; }
+      .user-info { width: 100%; justify-content: space-between; }
+
+      .container { padding: 1rem 0.5rem; }
+      .form-card { padding: 1rem; }
+
+      /* Card layout for entries on mobile */
+      .entry-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+
+      .entry-card {
+        background: var(--surface2);
+        border-radius: 8px;
+        padding: 0.75rem;
+      }
+
+      .entry-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.35rem;
+      }
+
+      .entry-card-row:last-child { margin-bottom: 0; }
+
+      .entry-card-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+      }
+
+      .entry-card-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      .entry-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .entry-card-actions .btn { flex: 1; text-align: center; }
+
+      .mobile-totals {
+        background: var(--surface2);
+        border-radius: 8px;
+        padding: 0.75rem;
+        border: 2px solid var(--accent);
+      }
+
+      .mobile-totals .entry-card-value { color: var(--accent); font-weight: 700; }
+      .mobile-totals .entry-card-label { color: var(--accent); }
+
+      /* Hide desktop table on mobile */
+      .desktop-table { display: none; }
+
+      .stash-detail { padding: 0.75rem; }
+
+      .stash-summary {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        align-items: flex-start !important;
+      }
+
+      .stash-summary span:last-child {
+        display: flex;
+        gap: 0.5rem;
+        width: 100%;
+      }
+
+      .stash-summary span:last-child .btn { flex: 1; text-align: center; }
+
+      .section-header { flex-wrap: wrap; gap: 0.5rem; }
+    }
+
+    /* Show desktop table on larger screens, hide mobile cards */
+    @media (min-width: 601px) {
+      .mobile-entries { display: none; }
     }
   </style>
 </head>
@@ -616,7 +697,8 @@
     const sumMyPay = entries.reduce((s, e) => s + e.myPay, 0);
     const sumTotal = entries.reduce((s, e) => s + e.total, 0);
 
-    let html = `<table>
+    // Desktop table
+    let html = `<div class="desktop-table"><table>
       <thead><tr>
         <th>Date</th><th>Service</th><th>Tip</th><th>Pay %</th><th>My Pay</th><th>Total</th><th></th>
       </tr></thead><tbody>`;
@@ -644,7 +726,65 @@
       <td>$${fmt(sumMyPay)}</td>
       <td>$${fmt(sumTotal)}</td>
       <td></td>
-    </tr></tbody></table>`;
+    </tr></tbody></table></div>`;
+
+    // Mobile cards
+    html += `<div class="mobile-entries"><div class="entry-cards">`;
+
+    for (const e of entries) {
+      html += `<div class="entry-card">
+        <div class="entry-card-row">
+          <span class="entry-card-label">Date</span>
+          <span class="entry-card-value">${formatDate(e.date)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Service</span>
+          <span class="entry-card-value">$${fmt(e.serviceCost)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Tip</span>
+          <span class="entry-card-value">$${fmt(e.tip)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Pay %</span>
+          <span class="entry-card-value">${e.payPercent || 60}%</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">My Pay</span>
+          <span class="entry-card-value">$${fmt(e.myPay)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Total</span>
+          <span class="entry-card-value">$${fmt(e.total)}</span>
+        </div>
+        <div class="entry-card-actions">
+          <button class="btn btn-primary btn-small" data-edit="${e.id}" data-source="${source}">✏️ Edit</button>
+          ${source === 'current' ? `<button class="btn btn-red btn-small" data-delete="${e.id}">🗑 Delete</button>` : ''}
+        </div>
+      </div>`;
+    }
+
+    // Mobile totals
+    html += `<div class="entry-card mobile-totals">
+      <div class="entry-card-row">
+        <span class="entry-card-label">Total Service</span>
+        <span class="entry-card-value">$${fmt(sumService)}</span>
+      </div>
+      <div class="entry-card-row">
+        <span class="entry-card-label">Total Tips</span>
+        <span class="entry-card-value">$${fmt(sumTip)}</span>
+      </div>
+      <div class="entry-card-row">
+        <span class="entry-card-label">Total My Pay</span>
+        <span class="entry-card-value">$${fmt(sumMyPay)}</span>
+      </div>
+      <div class="entry-card-row">
+        <span class="entry-card-label">Grand Total</span>
+        <span class="entry-card-value">$${fmt(sumTotal)}</span>
+      </div>
+    </div>`;
+
+    html += `</div></div>`;
     return html;
   }
 
@@ -664,7 +804,7 @@
         const sumTotal = stash.entries.reduce((s, e) => s + e.total, 0);
 
         html += `<details class="stash-detail" ${i === 0 ? 'open' : ''}>
-          <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <summary class="stash-summary" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
             <span><strong>${stash.label}</strong> — $${fmt(sumTotal)} total</span>
             <span>
               <button class="btn btn-orange btn-small" data-unstash="${stash.id}">↩️ Unstash</button>
