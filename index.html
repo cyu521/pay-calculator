@@ -244,7 +244,7 @@
       padding: 1rem;
       background: var(--surface2);
       border-radius: 8px;
-      transition: transform 0.15s, opacity 0.15s;
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
     .stash-detail.dragging {
@@ -254,6 +254,34 @@
 
     .stash-detail.drag-over {
       border: 2px dashed var(--accent);
+    }
+
+    .stash-detail.moving-up {
+      animation: slideUp 0.3s ease;
+    }
+
+    .stash-detail.moving-down {
+      animation: slideDown 0.3s ease;
+    }
+
+    .stash-detail.flash {
+      animation: flashHighlight 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      0% { transform: translateY(100%); opacity: 0.4; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      0% { transform: translateY(-100%); opacity: 0.4; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes flashHighlight {
+      0% { background: var(--surface2); }
+      40% { background: var(--accent); }
+      100% { background: var(--surface2); }
     }
 
     .stash-reorder {
@@ -884,11 +912,30 @@
   async function moveStash(idx, direction) {
     const newIdx = idx + direction;
     if (newIdx < 0 || newIdx >= state.stashes.length) return;
+
+    // Animate the two swapping stashes
+    const stashEls = document.querySelectorAll('[data-stash-idx]');
+    const movingEl = stashEls[idx];
+    const targetEl = stashEls[newIdx];
+
+    if (movingEl && targetEl) {
+      movingEl.classList.add(direction === -1 ? 'moving-up' : 'moving-down');
+      targetEl.classList.add(direction === -1 ? 'moving-down' : 'moving-up');
+
+      await new Promise(r => setTimeout(r, 300));
+    }
+
     const [moved] = state.stashes.splice(idx, 1);
     state.stashes.splice(newIdx, 0, moved);
     await saveState();
     showToast('Stash order updated');
     render();
+
+    // Flash the moved stash in its new position
+    requestAnimationFrame(() => {
+      const updated = document.querySelectorAll('[data-stash-idx]');
+      if (updated[newIdx]) updated[newIdx].classList.add('flash');
+    });
   }
 
   // ============================================================
