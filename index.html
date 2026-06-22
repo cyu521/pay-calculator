@@ -534,7 +534,7 @@
 <!-- Confirm Modal -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal" style="text-align:center;">
-    <h3 style="color:var(--red);">⚠️ Confirm Delete</h3>
+    <h3 id="confirmTitle" style="color:var(--red);">⚠️ Confirm Delete</h3>
     <p id="confirmMessage" style="margin:1rem 0; color:var(--text-muted); font-size:1rem;"></p>
     <div class="modal-actions" style="justify-content:center;">
       <button class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
@@ -711,8 +711,12 @@
   // ============================================================
   let confirmResolve = null;
 
-  function showConfirm(message) {
+  function showConfirm(message, { title = '⚠️ Confirm Delete', btnText = 'Delete', btnClass = 'btn-red' } = {}) {
+    document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMessage').textContent = message;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.textContent = btnText;
+    btn.className = `btn ${btnClass}`;
     document.getElementById('confirmModal').classList.add('active');
     return new Promise(resolve => { confirmResolve = resolve; });
   }
@@ -820,6 +824,14 @@
   async function unstash(stashId) {
     const idx = state.stashes.findIndex(s => s.id === stashId);
     if (idx === -1) return;
+
+    if (state.entries.length > 0) {
+      const confirmed = await showConfirm(
+        `You have ${state.entries.length} current ${state.entries.length === 1 ? 'entry' : 'entries'}. Unstashing will merge these together. Continue?`,
+        { title: '⚠️ Heads Up', btnText: 'Continue', btnClass: 'btn-orange' }
+      );
+      if (!confirmed) return;
+    }
 
     state.entries = [...state.entries, ...state.stashes[idx].entries];
     state.stashes.splice(idx, 1);
