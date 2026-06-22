@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pay Calculator</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -42,18 +41,31 @@
       gap: 2rem;
     }
 
-    .login-screen h1 {
-      font-size: 2.5rem;
-      color: var(--accent);
+    .login-screen h1 { font-size: 2.5rem; color: var(--accent); }
+    .login-screen p { color: var(--text-muted); font-size: 1.1rem; }
+
+    .btn-google {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      color: #333;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
     }
 
-    .login-screen p {
-      color: var(--text-muted);
-      font-size: 1.1rem;
+    .btn-google:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    #g_id_signin {
-      margin-top: 1rem;
+    .btn-google img {
+      width: 20px;
+      height: 20px;
     }
 
     /* --- Top Bar --- */
@@ -66,17 +78,9 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .top-bar .brand {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
+    .top-bar .brand { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
 
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
 
     .user-info img {
       width: 32px;
@@ -85,10 +89,7 @@
       border: 2px solid var(--accent);
     }
 
-    .user-info .user-name {
-      font-size: 0.9rem;
-      color: var(--text);
-    }
+    .user-info .user-name { font-size: 0.9rem; color: var(--text); }
 
     .btn-signout {
       padding: 0.4rem 0.8rem;
@@ -101,26 +102,19 @@
       transition: background 0.2s;
     }
 
-    .btn-signout:hover {
-      background: var(--surface2);
-      color: var(--text);
-    }
+    .btn-signout:hover { background: var(--surface2); color: var(--text); }
 
     /* --- Main Content --- */
-    h1 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-      color: var(--accent);
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem;
-    }
-
+    .container { max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem; }
     .hidden { display: none !important; }
+
+    /* --- Loading --- */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
 
     /* --- Cards & Forms --- */
     .form-card {
@@ -131,11 +125,7 @@
       border: 1px solid var(--border);
     }
 
-    .form-card h2 {
-      margin-bottom: 1rem;
-      font-size: 1.1rem;
-      color: var(--text-muted);
-    }
+    .form-card h2 { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-muted); }
 
     .form-row {
       display: flex;
@@ -170,9 +160,7 @@
       transition: border-color 0.2s;
     }
 
-    .form-group input:focus {
-      border-color: var(--accent);
-    }
+    .form-group input:focus { border-color: var(--accent); }
 
     .btn {
       padding: 0.6rem 1.2rem;
@@ -186,19 +174,14 @@
     }
 
     .btn:active { transform: scale(0.97); }
-
     .btn-primary { background: var(--accent); color: var(--bg); }
     .btn-primary:hover { background: var(--accent-hover); }
-
     .btn-green { background: var(--green); color: var(--bg); }
     .btn-green:hover { background: var(--green-hover); }
-
     .btn-red { background: var(--red); color: var(--bg); }
     .btn-red:hover { background: var(--red-hover); }
-
     .btn-orange { background: var(--orange); color: var(--bg); }
     .btn-orange:hover { background: var(--orange-hover); }
-
     .btn-small { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
 
     /* --- Tables --- */
@@ -209,10 +192,7 @@
       margin-bottom: 0.75rem;
     }
 
-    .section-header h2 {
-      font-size: 1.1rem;
-      color: var(--text-muted);
-    }
+    .section-header h2 { font-size: 1.1rem; color: var(--text-muted); }
 
     table { width: 100%; border-collapse: collapse; }
 
@@ -297,7 +277,6 @@
     }
     .btn-ghost:hover { background: var(--surface2); }
 
-    /* --- Responsive --- */
     @media (max-width: 600px) {
       .form-row { flex-direction: column; }
       .form-group { min-width: 100%; }
@@ -308,27 +287,28 @@
 </head>
 <body>
 
-<!-- ==================== LOGIN SCREEN ==================== -->
+<!-- Login Screen -->
 <div id="loginScreen" class="login-screen">
   <h1>💰 Pay Calculator</h1>
   <p>Sign in to track your pay</p>
-  <div id="g_id_signin"></div>
+  <button class="btn-google" id="googleSignInBtn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    Sign in with Google
+  </button>
 </div>
 
-<!-- ==================== APP (hidden until signed in) ==================== -->
+<!-- App Screen -->
 <div id="appScreen" class="hidden">
-  <!-- Top Bar -->
   <div class="top-bar">
     <span class="brand">💰 Pay Calculator</span>
     <div class="user-info">
       <img id="userAvatar" src="" alt="avatar">
       <span id="userName" class="user-name"></span>
-      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+      <button class="btn-signout" id="signOutBtn">Sign Out</button>
     </div>
   </div>
 
   <div class="container">
-    <!-- Entry Form -->
     <div class="form-card">
       <h2>New Entry</h2>
       <div class="form-row">
@@ -338,29 +318,27 @@
         </div>
         <div class="form-group">
           <label>Service Cost ($)</label>
-          <input type="number" id="serviceCost" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter') addEntry()">
+          <input type="number" id="serviceCost" min="0" step="0.01" placeholder="0.00">
         </div>
         <div class="form-group">
           <label>Tip ($)</label>
-          <input type="number" id="tip" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter') addEntry()">
+          <input type="number" id="tip" min="0" step="0.01" placeholder="0.00">
         </div>
-        <button class="btn btn-primary" onclick="addEntry()">Submit</button>
+        <button class="btn btn-primary" id="submitBtn">Submit</button>
       </div>
     </div>
 
-    <!-- Current Entries -->
     <div class="form-card">
       <div class="section-header">
         <h2>Current Entries</h2>
-        <button class="btn btn-green btn-small" onclick="stashEntries()">📦 Stash</button>
+        <button class="btn btn-green btn-small" id="stashBtn">📦 Stash</button>
       </div>
-      <div id="currentEntries"></div>
+      <div id="currentEntries"><div class="loading">Loading...</div></div>
     </div>
 
-    <!-- Stashed History -->
     <div class="form-card">
       <h2>Stashed History</h2>
-      <div id="stashedHistory"></div>
+      <div id="stashedHistory"><div class="loading">Loading...</div></div>
     </div>
   </div>
 </div>
@@ -382,128 +360,98 @@
       <input type="number" id="editTip" min="0" step="0.01">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+      <button class="btn btn-ghost" id="editCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="editSaveBtn">Save</button>
     </div>
   </div>
 </div>
 
-<script>
-  // ============================================================
-  // CONFIG — Replace with your Google OAuth Client ID
-  // ============================================================
-  const GOOGLE_CLIENT_ID = '895287788816-3t5tmovrhbvr7g4cb3nej9kfajhcq8u4.apps.googleusercontent.com';
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAf1ceWVzpAOXSLlwoPKliiooinqCzny2U",
+    authDomain: "pay-calculator-f3314.firebaseapp.com",
+    projectId: "pay-calculator-f3314",
+    storageBucket: "pay-calculator-f3314.firebasestorage.app",
+    messagingSenderId: "765596328327",
+    appId: "1:765596328327:web:38ba65b107a9b206e63322"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
 
   // ============================================================
-  // Auth State
+  // State
   // ============================================================
-  let currentUser = null; // { id, name, email, picture }
+  let currentUser = null;
+  let state = { entries: [], stashes: [] };
 
-  function getStorageKey() {
-    return `payCalc_${currentUser.id}`;
+  function userDocRef() {
+    return doc(db, 'users', currentUser.uid);
   }
 
-  // Decode JWT payload (Google ID token is a JWT)
-  function decodeJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(base64).split('').map(c =>
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      ).join('')
-    );
-    return JSON.parse(json);
-  }
-
-  // Called by Google when sign-in succeeds
-  function handleCredentialResponse(response) {
-    const payload = decodeJwt(response.credential);
-    currentUser = {
-      id: payload.sub,
-      name: payload.name,
-      email: payload.email,
-      picture: payload.picture
-    };
-
-    // Persist session so page refresh stays logged in
-    localStorage.setItem('payCalc_session', JSON.stringify(currentUser));
-
-    showApp();
-  }
-
-  function showApp() {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('appScreen').classList.remove('hidden');
-
-    document.getElementById('userAvatar').src = currentUser.picture;
-    document.getElementById('userName').textContent = currentUser.name;
-    document.getElementById('entryDate').value = todayStr();
-
-    render();
-  }
-
-  function signOut() {
-    currentUser = null;
-    localStorage.removeItem('payCalc_session');
-
-    document.getElementById('appScreen').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-
-    // Re-render the Google button so they can sign in again
-    google.accounts.id.disableAutoSelect();
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
-    );
-  }
-
-  // ============================================================
-  // Initialize Google Sign-In
-  // ============================================================
-  window.addEventListener('load', () => {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-      auto_select: true  // auto-sign-in if only one Google account
-    });
-
-    // Check for existing session
-    const saved = localStorage.getItem('payCalc_session');
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      showApp();
-      return;
+  async function loadState() {
+    const snap = await getDoc(userDocRef());
+    if (snap.exists()) {
+      state = snap.data();
+      // Ensure arrays exist
+      if (!state.entries) state.entries = [];
+      if (!state.stashes) state.stashes = [];
+    } else {
+      state = { entries: [], stashes: [] };
     }
+  }
 
-    // Render the sign-in button
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with' }
-    );
+  async function saveState() {
+    await setDoc(userDocRef(), state);
+  }
 
-    // Also try One Tap prompt
-    google.accounts.id.prompt();
+  // ============================================================
+  // Auth
+  // ============================================================
+  document.getElementById('googleSignInBtn').addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch(err => {
+      console.error('Sign-in error:', err);
+      alert('Sign-in failed. Please try again.');
+    });
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', () => {
+    signOut(auth);
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+      document.getElementById('userAvatar').src = user.photoURL || '';
+      document.getElementById('userName').textContent = user.displayName || user.email;
+      document.getElementById('entryDate').value = todayStr();
+
+      await loadState();
+      render();
+    } else {
+      currentUser = null;
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
   });
 
   // ============================================================
-  // Data — same logic, but keyed per user
+  // Helpers
   // ============================================================
-  function loadState() {
-    const raw = localStorage.getItem(getStorageKey());
-    if (raw) return JSON.parse(raw);
-    return { entries: [], stashes: [] };
-  }
-
-  function saveState(state) {
-    localStorage.setItem(getStorageKey(), JSON.stringify(state));
-  }
-
-  // ---- Helpers ----
   function fmt(n) { return n.toFixed(2); }
 
   function todayStr() {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
+    return new Date().toISOString().slice(0, 10);
   }
 
   function formatDate(iso) {
@@ -511,8 +459,18 @@
     return `${m}/${d}/${y}`;
   }
 
-  // ---- Add Entry ----
-  function addEntry() {
+  function dateRangeLabel(entries) {
+    const dates = entries.map(e => e.date).sort();
+    const earliest = dates[0];
+    const latest = dates[dates.length - 1];
+    if (earliest === latest) return formatDate(earliest);
+    return `${formatDate(earliest)} – ${formatDate(latest)}`;
+  }
+
+  // ============================================================
+  // Add Entry
+  // ============================================================
+  async function addEntry() {
     const date = document.getElementById('entryDate').value;
     const serviceCost = parseFloat(document.getElementById('serviceCost').value) || 0;
     const tip = parseFloat(document.getElementById('tip').value) || 0;
@@ -525,9 +483,8 @@
     const myPay = serviceCost * 0.6;
     const total = myPay + tip;
 
-    const state = loadState();
     state.entries.push({ id: Date.now(), date, serviceCost, tip, myPay, total });
-    saveState(state);
+    await saveState();
 
     document.getElementById('serviceCost').value = '';
     document.getElementById('tip').value = '';
@@ -535,15 +492,22 @@
     render();
   }
 
-  // ---- Delete Entry ----
-  function deleteEntry(id) {
-    const state = loadState();
+  document.getElementById('submitBtn').addEventListener('click', addEntry);
+  document.getElementById('serviceCost').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
+  document.getElementById('tip').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
+
+  // ============================================================
+  // Delete Entry
+  // ============================================================
+  async function deleteEntry(id) {
     state.entries = state.entries.filter(e => e.id !== id);
-    saveState(state);
+    await saveState();
     render();
   }
 
-  // ---- Edit Entry ----
+  // ============================================================
+  // Edit Entry
+  // ============================================================
   let editingId = null;
   let editingSource = null;
 
@@ -551,7 +515,6 @@
     editingId = id;
     editingSource = source;
 
-    const state = loadState();
     const entry = source === 'current'
       ? state.entries.find(e => e.id === id)
       : state.stashes[source].entries.find(e => e.id === id);
@@ -568,14 +531,13 @@
     editingSource = null;
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     const date = document.getElementById('editDate').value;
     const serviceCost = parseFloat(document.getElementById('editServiceCost').value) || 0;
     const tip = parseFloat(document.getElementById('editTip').value) || 0;
     const myPay = serviceCost * 0.6;
     const total = myPay + tip;
 
-    const state = loadState();
     const entries = editingSource === 'current'
       ? state.entries
       : state.stashes[editingSource].entries;
@@ -585,24 +547,18 @@
       entries[idx] = { ...entries[idx], date, serviceCost, tip, myPay, total };
     }
 
-    saveState(state);
+    await saveState();
     closeEditModal();
     render();
   }
 
-  // ---- Stash ----
-  function dateRangeLabel(entries) {
-    const dates = entries.map(e => e.date).sort();
-    const earliest = dates[0];
-    const latest = dates[dates.length - 1];
-    if (earliest === latest) {
-      return formatDate(earliest);
-    }
-    return `${formatDate(earliest)} – ${formatDate(latest)}`;
-  }
+  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+  document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
 
-  function stashEntries() {
-    const state = loadState();
+  // ============================================================
+  // Stash / Unstash / Delete Stash
+  // ============================================================
+  async function stashEntries() {
     if (state.entries.length === 0) {
       alert('No entries to stash.');
       return;
@@ -617,30 +573,32 @@
       entries: [...state.entries]
     });
     state.entries = [];
-    saveState(state);
+    await saveState();
     render();
   }
 
-  function unstash(stashId) {
-    const state = loadState();
+  async function unstash(stashId) {
     const idx = state.stashes.findIndex(s => s.id === stashId);
     if (idx === -1) return;
 
     state.entries = [...state.entries, ...state.stashes[idx].entries];
     state.stashes.splice(idx, 1);
-    saveState(state);
+    await saveState();
     render();
   }
 
-  function deleteStash(stashId) {
+  async function deleteStash(stashId) {
     if (!confirm('Permanently delete this stash?')) return;
-    const state = loadState();
     state.stashes = state.stashes.filter(s => s.id !== stashId);
-    saveState(state);
+    await saveState();
     render();
   }
 
-  // ---- Render ----
+  document.getElementById('stashBtn').addEventListener('click', stashEntries);
+
+  // ============================================================
+  // Render
+  // ============================================================
   function renderTable(entries, source) {
     if (entries.length === 0) {
       return '<div class="empty-state">No entries yet</div>';
@@ -664,8 +622,8 @@
         <td>$${fmt(e.myPay)}</td>
         <td>$${fmt(e.total)}</td>
         <td><div class="actions-cell">
-          <button class="btn btn-primary btn-small" onclick="openEditModal(${e.id}, ${typeof source === 'number' ? source : `'${source}'`})">✏️</button>
-          ${source === 'current' ? `<button class="btn btn-red btn-small" onclick="deleteEntry(${e.id})">🗑</button>` : ''}
+          <button class="btn btn-primary btn-small" data-edit="${e.id}" data-source="${source}">✏️</button>
+          ${source === 'current' ? `<button class="btn btn-red btn-small" data-delete="${e.id}">🗑</button>` : ''}
         </div></td>
       </tr>`;
     }
@@ -682,33 +640,64 @@
   }
 
   function render() {
-    const state = loadState();
+    // Current entries
+    const currentEl = document.getElementById('currentEntries');
+    currentEl.innerHTML = renderTable(state.entries, 'current');
 
-    document.getElementById('currentEntries').innerHTML = renderTable(state.entries, 'current');
-
-    const stashContainer = document.getElementById('stashedHistory');
+    // Stashed history
+    const stashEl = document.getElementById('stashedHistory');
     if (state.stashes.length === 0) {
-      stashContainer.innerHTML = '<div class="empty-state">No stashed history</div>';
-      return;
+      stashEl.innerHTML = '<div class="empty-state">No stashed history</div>';
+    } else {
+      let html = '';
+      for (let i = 0; i < state.stashes.length; i++) {
+        const stash = state.stashes[i];
+        const sumTotal = stash.entries.reduce((s, e) => s + e.total, 0);
+
+        html += `<details class="stash-detail" ${i === 0 ? 'open' : ''}>
+          <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span><strong>${stash.label}</strong> — $${fmt(sumTotal)} total</span>
+            <span>
+              <button class="btn btn-orange btn-small" data-unstash="${stash.id}">↩️ Unstash</button>
+              <button class="btn btn-red btn-small" data-delstash="${stash.id}">🗑</button>
+            </span>
+          </summary>
+          ${renderTable(stash.entries, i)}
+        </details>`;
+      }
+      stashEl.innerHTML = html;
     }
 
-    let html = '';
-    for (let i = 0; i < state.stashes.length; i++) {
-      const stash = state.stashes[i];
-      const sumTotal = stash.entries.reduce((s, e) => s + e.total, 0);
+    // Attach event listeners via delegation
+    document.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = Number(btn.dataset.edit);
+        const source = btn.dataset.source === 'current' ? 'current' : Number(btn.dataset.source);
+        openEditModal(id, source);
+      });
+    });
 
-      html += `<details class="stash-detail" ${i === 0 ? 'open' : ''}>
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-          <span><strong>${stash.label}</strong> — $${fmt(sumTotal)} total</span>
-          <span>
-            <button class="btn btn-orange btn-small" onclick="event.stopPropagation(); unstash(${stash.id})">↩️ Unstash</button>
-            <button class="btn btn-red btn-small" onclick="event.stopPropagation(); deleteStash(${stash.id})">🗑</button>
-          </span>
-        </summary>
-        ${renderTable(stash.entries, i)}
-      </details>`;
-    }
-    stashContainer.innerHTML = html;
+    document.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteEntry(Number(btn.dataset.delete));
+      });
+    });
+
+    document.querySelectorAll('[data-unstash]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        unstash(Number(btn.dataset.unstash));
+      });
+    });
+
+    document.querySelectorAll('[data-delstash]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteStash(Number(btn.dataset.delstash));
+      });
+    });
   }
 </script>
 
