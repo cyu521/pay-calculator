@@ -613,7 +613,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-  import { getAuth, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   // Firebase config
@@ -694,8 +694,18 @@
   // ============================================================
   // Auth
   // ============================================================
-  document.getElementById('googleSignInBtn').addEventListener('click', () => {
-    signInWithRedirect(auth, provider);
+  document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      // If popup fails (blocked, session storage issue), fall back to redirect
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/internal-error' || err.code === 'auth/missing-initial-state') {
+        signInWithRedirect(auth, provider);
+      } else {
+        console.error('Sign-in error:', err);
+        showToast('Sign-in failed. Please try again.', 'error');
+      }
+    }
   });
 
   document.getElementById('signOutBtn').addEventListener('click', () => {
