@@ -377,7 +377,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-  import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getAuth, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   // Firebase config
@@ -424,10 +424,7 @@
   // Auth
   // ============================================================
   document.getElementById('googleSignInBtn').addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch(err => {
-      console.error('Sign-in error:', err);
-      alert('Sign-in failed. Please try again.');
-    });
+    signInWithRedirect(auth, provider);
   });
 
   document.getElementById('signOutBtn').addEventListener('click', () => {
