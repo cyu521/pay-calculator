@@ -216,11 +216,19 @@
 
     .totals-row td {
       font-weight: 700;
-      border-top: 2px solid var(--accent);
-      border-bottom: none;
+      border-bottom: 2px solid var(--accent);
+      border-top: none;
       color: var(--accent);
-      padding-top: 0.8rem;
+      padding-bottom: 0.8rem;
     }
+
+    /* Highlight My Pay and Total columns */
+    .col-mypay { color: var(--green); font-weight: 600; }
+    .col-total { color: var(--accent); font-weight: 600; }
+    th.col-mypay { color: var(--green); }
+    th.col-total { color: var(--accent); }
+    .totals-row .col-mypay { color: var(--green); }
+    .totals-row .col-total { color: var(--accent); }
 
     .actions-cell { display: flex; gap: 0.4rem; }
 
@@ -696,12 +704,25 @@
     const sumTip = entries.reduce((s, e) => s + e.tip, 0);
     const sumMyPay = entries.reduce((s, e) => s + e.myPay, 0);
     const sumTotal = entries.reduce((s, e) => s + e.total, 0);
+    const totalsAtTop = (source === 'current');
 
     // Desktop table
     let html = `<div class="desktop-table"><table>
       <thead><tr>
-        <th>Date</th><th>Service</th><th>Tip</th><th>Pay %</th><th>My Pay</th><th>Total</th><th></th>
+        <th>Date</th><th>Service</th><th>Tip</th><th>Pay %</th><th class="col-mypay">My Pay</th><th class="col-total">Total</th><th></th>
       </tr></thead><tbody>`;
+
+    if (totalsAtTop) {
+      html += `<tr class="totals-row">
+        <td>Totals</td>
+        <td>$${fmt(sumService)}</td>
+        <td>$${fmt(sumTip)}</td>
+        <td></td>
+        <td class="col-mypay">$${fmt(sumMyPay)}</td>
+        <td class="col-total">$${fmt(sumTotal)}</td>
+        <td></td>
+      </tr>`;
+    }
 
     for (const e of entries) {
       html += `<tr>
@@ -709,8 +730,8 @@
         <td>$${fmt(e.serviceCost)}</td>
         <td>$${fmt(e.tip)}</td>
         <td>${e.payPercent || 60}%</td>
-        <td>$${fmt(e.myPay)}</td>
-        <td>$${fmt(e.total)}</td>
+        <td class="col-mypay">$${fmt(e.myPay)}</td>
+        <td class="col-total">$${fmt(e.total)}</td>
         <td><div class="actions-cell">
           <button class="btn btn-primary btn-small" data-edit="${e.id}" data-source="${source}">✏️</button>
           ${source === 'current' ? `<button class="btn btn-red btn-small" data-delete="${e.id}">🗑</button>` : ''}
@@ -718,18 +739,44 @@
       </tr>`;
     }
 
-    html += `<tr class="totals-row">
-      <td>Totals</td>
-      <td>$${fmt(sumService)}</td>
-      <td>$${fmt(sumTip)}</td>
-      <td></td>
-      <td>$${fmt(sumMyPay)}</td>
-      <td>$${fmt(sumTotal)}</td>
-      <td></td>
-    </tr></tbody></table></div>`;
+    if (!totalsAtTop) {
+      html += `<tr class="totals-row">
+        <td>Totals</td>
+        <td>$${fmt(sumService)}</td>
+        <td>$${fmt(sumTip)}</td>
+        <td></td>
+        <td class="col-mypay">$${fmt(sumMyPay)}</td>
+        <td class="col-total">$${fmt(sumTotal)}</td>
+        <td></td>
+      </tr>`;
+    }
+
+    html += `</tbody></table></div>`;
 
     // Mobile cards
     html += `<div class="mobile-entries"><div class="entry-cards">`;
+
+    // Mobile totals at top for current entries
+    if (totalsAtTop) {
+      html += `<div class="entry-card mobile-totals">
+        <div class="entry-card-row">
+          <span class="entry-card-label">Total Service</span>
+          <span class="entry-card-value">$${fmt(sumService)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Total Tips</span>
+          <span class="entry-card-value">$${fmt(sumTip)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label" style="color:var(--green)">Total My Pay</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumMyPay)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Grand Total</span>
+          <span class="entry-card-value">$${fmt(sumTotal)}</span>
+        </div>
+      </div>`;
+    }
 
     for (const e of entries) {
       html += `<div class="entry-card">
@@ -750,12 +797,12 @@
           <span class="entry-card-value">${e.payPercent || 60}%</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label">My Pay</span>
-          <span class="entry-card-value">$${fmt(e.myPay)}</span>
+          <span class="entry-card-label" style="color:var(--green)">My Pay</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(e.myPay)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label">Total</span>
-          <span class="entry-card-value">$${fmt(e.total)}</span>
+          <span class="entry-card-label" style="color:var(--accent)">Total</span>
+          <span class="entry-card-value" style="color:var(--accent)">$${fmt(e.total)}</span>
         </div>
         <div class="entry-card-actions">
           <button class="btn btn-primary btn-small" data-edit="${e.id}" data-source="${source}">✏️ Edit</button>
@@ -764,25 +811,27 @@
       </div>`;
     }
 
-    // Mobile totals
-    html += `<div class="entry-card mobile-totals">
-      <div class="entry-card-row">
-        <span class="entry-card-label">Total Service</span>
-        <span class="entry-card-value">$${fmt(sumService)}</span>
-      </div>
-      <div class="entry-card-row">
-        <span class="entry-card-label">Total Tips</span>
-        <span class="entry-card-value">$${fmt(sumTip)}</span>
-      </div>
-      <div class="entry-card-row">
-        <span class="entry-card-label">Total My Pay</span>
-        <span class="entry-card-value">$${fmt(sumMyPay)}</span>
-      </div>
-      <div class="entry-card-row">
-        <span class="entry-card-label">Grand Total</span>
-        <span class="entry-card-value">$${fmt(sumTotal)}</span>
-      </div>
-    </div>`;
+    // Mobile totals at bottom for stashed
+    if (!totalsAtTop) {
+      html += `<div class="entry-card mobile-totals">
+        <div class="entry-card-row">
+          <span class="entry-card-label">Total Service</span>
+          <span class="entry-card-value">$${fmt(sumService)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Total Tips</span>
+          <span class="entry-card-value">$${fmt(sumTip)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label" style="color:var(--green)">Total My Pay</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumMyPay)}</span>
+        </div>
+        <div class="entry-card-row">
+          <span class="entry-card-label">Grand Total</span>
+          <span class="entry-card-value">$${fmt(sumTotal)}</span>
+        </div>
+      </div>`;
+    }
 
     html += `</div></div>`;
     return html;
