@@ -260,25 +260,31 @@
     }
 
     .stash-detail.moving-up {
-      animation: slideUp 0.3s ease;
+      animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stash-detail.moving-down {
-      animation: slideDown 0.3s ease;
+      animation: slideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stash-detail.flash {
-      animation: flashHighlight 0.4s ease;
+      animation: flashHighlight 0.6s ease;
     }
 
     @keyframes slideUp {
-      0% { transform: translateY(100%); opacity: 0.4; }
+      0% { transform: translateY(30px); opacity: 0; }
       100% { transform: translateY(0); opacity: 1; }
     }
 
     @keyframes slideDown {
-      0% { transform: translateY(-100%); opacity: 0.4; }
+      0% { transform: translateY(-30px); opacity: 0; }
       100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes flashHighlight {
+      0% { background: var(--surface2); }
+      30% { background: rgba(56, 189, 248, 0.15); }
+      100% { background: var(--surface2); }
     }
 
     @keyframes flashHighlight {
@@ -915,28 +921,23 @@
     const newIdx = idx + direction;
     if (newIdx < 0 || newIdx >= state.stashes.length) return;
 
-    // Animate the two swapping stashes
-    const stashEls = document.querySelectorAll('[data-stash-idx]');
-    const movingEl = stashEls[idx];
-    const targetEl = stashEls[newIdx];
-
-    if (movingEl && targetEl) {
-      movingEl.classList.add(direction === -1 ? 'moving-up' : 'moving-down');
-      targetEl.classList.add(direction === -1 ? 'moving-down' : 'moving-up');
-
-      await new Promise(r => setTimeout(r, 300));
-    }
-
     const [moved] = state.stashes.splice(idx, 1);
     state.stashes.splice(newIdx, 0, moved);
     await saveState();
-    showToast('Stash order updated');
     render();
 
-    // Flash the moved stash in its new position
+    // Animate after render
     requestAnimationFrame(() => {
-      const updated = document.querySelectorAll('[data-stash-idx]');
-      if (updated[newIdx]) updated[newIdx].classList.add('flash');
+      const stashEls = document.querySelectorAll('[data-stash-idx]');
+      const movedEl = stashEls[newIdx];
+      const swappedEl = stashEls[idx];
+
+      if (movedEl) movedEl.classList.add(direction === -1 ? 'moving-up' : 'moving-down');
+      if (swappedEl) swappedEl.classList.add(direction === -1 ? 'moving-down' : 'moving-up');
+
+      setTimeout(() => {
+        if (movedEl) movedEl.classList.add('flash');
+      }, 500);
     });
   }
 
