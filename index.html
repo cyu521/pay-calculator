@@ -285,6 +285,60 @@
     }
     .btn-ghost:hover { background: var(--surface2); }
 
+    /* --- Toast notifications --- */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      pointer-events: auto;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      max-width: 360px;
+    }
+
+    .toast-success {
+      background: #065f46;
+      color: #d1fae5;
+      border: 1px solid var(--green);
+    }
+
+    .toast-error {
+      background: #7f1d1d;
+      color: #fecaca;
+      border: 1px solid var(--red);
+    }
+
+    .toast-warning {
+      background: #78350f;
+      color: #fed7aa;
+      border: 1px solid var(--orange);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(1rem); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(1rem); }
+    }
+
     @media (max-width: 600px) {
       .form-row { flex-direction: column; }
       .form-group { min-width: 100%; }
@@ -375,6 +429,20 @@
   </style>
 </head>
 <body>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Alert Modal (replaces native alert()) -->
+<div class="modal-overlay" id="alertModal">
+  <div class="modal" style="text-align:center;">
+    <h3 id="alertTitle" style="color:var(--orange);">⚠️ Heads Up</h3>
+    <p id="alertMessage" style="margin:1rem 0; color:var(--text-muted); font-size:1rem;"></p>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" id="alertOkBtn">OK</button>
+    </div>
+  </div>
+</div>
 
 <!-- Login Screen -->
 <div id="loginScreen" class="login-screen">
@@ -497,6 +565,30 @@
   const provider = new GoogleAuthProvider();
 
   // ============================================================
+  // Toast & Alert helpers
+  // ============================================================
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const icons = { success: '✅', error: '❌', warning: '⚠️' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${icons[type] || ''}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function showAlert(message, title = '⚠️ Heads Up', color = 'var(--orange)') {
+    document.getElementById('alertTitle').textContent = title;
+    document.getElementById('alertTitle').style.color = color;
+    document.getElementById('alertMessage').textContent = message;
+    document.getElementById('alertModal').classList.add('active');
+  }
+
+  document.getElementById('alertOkBtn').addEventListener('click', () => {
+    document.getElementById('alertModal').classList.remove('active');
+  });
+
+  // ============================================================
   // State
   // ============================================================
   let currentUser = null;
@@ -507,18 +599,29 @@
   }
 
   async function loadState() {
-    const snap = await getDoc(userDocRef());
-    if (snap.exists()) {
-      state = snap.data();
-      if (!state.entries) state.entries = [];
-      if (!state.stashes) state.stashes = [];
-    } else {
+    try {
+      const snap = await getDoc(userDocRef());
+      if (snap.exists()) {
+        state = snap.data();
+        if (!state.entries) state.entries = [];
+        if (!state.stashes) state.stashes = [];
+      } else {
+        state = { entries: [], stashes: [] };
+      }
+    } catch (err) {
+      console.error('Load error:', err);
+      showToast('Could not load your data. Check your connection.', 'error');
       state = { entries: [], stashes: [] };
     }
   }
 
   async function saveState() {
-    await setDoc(userDocRef(), state);
+    try {
+      await setDoc(userDocRef(), state);
+    } catch (err) {
+      console.error('Save error:', err);
+      showToast('Failed to save. Your changes may be lost.', 'error');
+    }
   }
 
   // ============================================================
@@ -582,7 +685,7 @@
     const payPercent = parseFloat(document.getElementById('payPercent').value) || 60;
 
     if (serviceCost <= 0) {
-      alert('Please enter a service cost.');
+      showAlert('Please enter a service cost.', '💡 Missing Info', 'var(--orange)');
       return;
     }
 
@@ -595,6 +698,7 @@
     document.getElementById('serviceCost').value = '';
     document.getElementById('tip').value = '';
     document.getElementById('entryDate').value = todayStr();
+    showToast('Entry added');
     render();
   }
 
@@ -633,6 +737,7 @@
     if (!confirmed) return;
     state.entries = state.entries.filter(e => e.id !== id);
     await saveState();
+    showToast('Entry deleted');
     render();
   }
 
@@ -682,6 +787,7 @@
 
     await saveState();
     closeEditModal();
+    showToast('Entry updated');
     render();
   }
 
@@ -693,7 +799,7 @@
   // ============================================================
   async function stashEntries() {
     if (state.entries.length === 0) {
-      alert('No entries to stash.');
+      showAlert('No entries to stash.', '📦 Nothing to Stash', 'var(--orange)');
       return;
     }
 
@@ -707,6 +813,7 @@
     });
     state.entries = [];
     await saveState();
+    showToast('Entries stashed');
     render();
   }
 
@@ -717,6 +824,7 @@
     state.entries = [...state.entries, ...state.stashes[idx].entries];
     state.stashes.splice(idx, 1);
     await saveState();
+    showToast('Entries restored');
     render();
   }
 
@@ -725,6 +833,7 @@
     if (!confirmed) return;
     state.stashes = state.stashes.filter(s => s.id !== stashId);
     await saveState();
+    showToast('Stash deleted');
     render();
   }
 
