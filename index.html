@@ -223,12 +223,12 @@
     }
 
     /* Highlight My Pay and Total columns */
-    .col-mypay { color: var(--green); font-weight: 600; }
-    .col-total { color: var(--accent); font-weight: 600; }
-    th.col-mypay { color: var(--green); }
-    th.col-total { color: var(--accent); }
-    .totals-row .col-mypay { color: var(--green); }
-    .totals-row .col-total { color: var(--accent); }
+    .col-mypay { color: var(--accent); font-weight: 600; }
+    .col-total { color: var(--green); font-weight: 600; }
+    th.col-mypay { color: var(--accent); }
+    th.col-total { color: var(--green); }
+    .totals-row .col-mypay { color: var(--accent); }
+    .totals-row .col-total { color: var(--green); }
 
     .actions-cell { display: flex; gap: 0.4rem; }
 
@@ -768,12 +768,12 @@
           <span class="entry-card-value">$${fmt(sumTip)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label" style="color:var(--green)">Total My Pay</span>
-          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumMyPay)}</span>
+          <span class="entry-card-label" style="color:var(--accent)">Total My Pay</span>
+          <span class="entry-card-value" style="color:var(--accent)">$${fmt(sumMyPay)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label">Grand Total</span>
-          <span class="entry-card-value">$${fmt(sumTotal)}</span>
+          <span class="entry-card-label" style="color:var(--green)">Grand Total</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumTotal)}</span>
         </div>
       </div>`;
     }
@@ -797,12 +797,12 @@
           <span class="entry-card-value">${e.payPercent || 60}%</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label" style="color:var(--green)">My Pay</span>
-          <span class="entry-card-value" style="color:var(--green)">$${fmt(e.myPay)}</span>
+          <span class="entry-card-label" style="color:var(--accent)">My Pay</span>
+          <span class="entry-card-value" style="color:var(--accent)">$${fmt(e.myPay)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label" style="color:var(--accent)">Total</span>
-          <span class="entry-card-value" style="color:var(--accent)">$${fmt(e.total)}</span>
+          <span class="entry-card-label" style="color:var(--green)">Total</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(e.total)}</span>
         </div>
         <div class="entry-card-actions">
           <button class="btn btn-primary btn-small" data-edit="${e.id}" data-source="${source}">✏️ Edit</button>
@@ -823,12 +823,12 @@
           <span class="entry-card-value">$${fmt(sumTip)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label" style="color:var(--green)">Total My Pay</span>
-          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumMyPay)}</span>
+          <span class="entry-card-label" style="color:var(--accent)">Total My Pay</span>
+          <span class="entry-card-value" style="color:var(--accent)">$${fmt(sumMyPay)}</span>
         </div>
         <div class="entry-card-row">
-          <span class="entry-card-label">Grand Total</span>
-          <span class="entry-card-value">$${fmt(sumTotal)}</span>
+          <span class="entry-card-label" style="color:var(--green)">Grand Total</span>
+          <span class="entry-card-value" style="color:var(--green)">$${fmt(sumTotal)}</span>
         </div>
       </div>`;
     }
